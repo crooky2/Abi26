@@ -39,7 +39,7 @@ document.getElementById('loginRegister').addEventListener('submit', async functi
     if (!isConfirmVisible) {
         e.preventDefault();
         const email = document.getElementById('email').value.trim();
-        if (!email) return; // let required attribute handle
+        if (!email) return;
         try {
             const resp = await fetch('/db/checkUser.php', {
                 method: 'POST',
@@ -50,15 +50,12 @@ document.getElementById('loginRegister').addEventListener('submit', async functi
             if (!data.exists) {
                 confirmBlock.style.display = 'block';
                 emailBlock.style.display = 'none';
-                // set required attributes for registration
                 document.getElementById('displayname').setAttribute('required', 'required');
                 document.getElementById('confirm_password').setAttribute('required', 'required');
-                // guide the user gently without alert spam
             } else {
                 this.submit();
             }
         } catch (err) {
-            // on error, just try to submit and handle on server
             this.submit();
         }
     }

@@ -19,19 +19,16 @@ $userId = (int)$_SESSION['user_id'];
 try {
 	$pdo->beginTransaction();
 
-	// Collect response IDs for this user
 	$stmt = $pdo->prepare('SELECT id FROM survey_responses WHERE account_id = :uid');
 	$stmt->execute(['uid' => $userId]);
 	$responseIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 	if ($responseIds && count($responseIds) > 0) {
-		// Delete answers referencing these responses
 		$placeholders = implode(',', array_fill(0, count($responseIds), '?'));
 		$delAns = $pdo->prepare("DELETE FROM survey_answers WHERE response_id IN ($placeholders)");
 		$delAns->execute($responseIds);
 	}
 
-	// Delete responses for this user
 	$delResp = $pdo->prepare('DELETE FROM survey_responses WHERE account_id = :uid');
 	$delResp->execute(['uid' => $userId]);
 

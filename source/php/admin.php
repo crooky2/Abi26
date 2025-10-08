@@ -14,8 +14,6 @@ if (!$user || !$user['admin']) {
 }
 ?>
 <?php
-// Build survey info data for the info panel (left)
-// List all surveys with basic metadata
 $surveyRows = [];
 try {
     $sStmt = $pdo->query("SELECT s.id, s.title, s.description, s.expires_at, s.created_at, a.displayname AS creator
@@ -29,27 +27,25 @@ try {
 
 $latestSurveyId = $surveyRows ? (int)$surveyRows[0]['id'] : null;
 
-// Question counts per survey
 $qCounts = [];
 try {
     $qc = $pdo->query('SELECT survey_id, COUNT(*) AS cnt FROM survey_questions GROUP BY survey_id');
     foreach ($qc->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $qCounts[(int)$r['survey_id']] = (int)$r['cnt'];
     }
-} catch (PDOException $e) { /* ignore */
+} catch (PDOException $e) {
 }
 
-// Response counts per survey
+
 $rCounts = [];
 try {
     $rc = $pdo->query('SELECT survey_id, COUNT(*) AS cnt FROM survey_responses GROUP BY survey_id');
     foreach ($rc->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $rCounts[(int)$r['survey_id']] = (int)$r['cnt'];
     }
-} catch (PDOException $e) { /* ignore */
+} catch (PDOException $e) {
 }
 
-// All questions grouped by survey (for details view)
 $questionsBySurvey = [];
 try {
     $qs = $pdo->query('SELECT survey_id, id, question_text, question_type, options FROM survey_questions ORDER BY id ASC');
@@ -69,7 +65,7 @@ try {
             'options' => $opts,
         ];
     }
-} catch (PDOException $e) { /* ignore */
+} catch (PDOException $e) {
 }
 
 $surveysData = [];
@@ -156,7 +152,6 @@ foreach ($surveyRows as $s) {
         </div>
 
         <script>
-            // Seed survey data for client-side search/details
             window.adminSurveyData = <?php echo json_encode($surveysData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
             window.latestSurveyId = <?php echo json_encode($latestSurveyId); ?>;
         </script>

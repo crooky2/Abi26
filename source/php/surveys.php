@@ -53,7 +53,6 @@ if (!empty($_SESSION['user_id'])) {
     $userVoted = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'survey_id');
 }
 
-// Sort surveys: active & not answered first, then active & answered, then expired; within groups by created_at DESC
 $surveysList = array_values($surveys);
 usort($surveysList, function($a, $b) use ($userVoted) {
     $now = time();
@@ -63,16 +62,15 @@ usort($surveysList, function($a, $b) use ($userVoted) {
     $bVoted = in_array($b['id'], $userVoted);
 
     $rank = function($expired, $voted){
-        if (!$expired && !$voted) return 0; // active + not answered
-        if (!$expired && $voted)  return 1; // active + answered
-        return 2;                            // expired (answered or not)
+        if (!$expired && !$voted) return 0;
+        if (!$expired && $voted)  return 1;
+        return 2;
     };
 
     $ra = $rank($aExpired, $aVoted);
     $rb = $rank($bExpired, $bVoted);
     if ($ra !== $rb) return $ra <=> $rb;
 
-    // Same group: newest first by created_at desc
     $ta = strtotime($a['created_at'] ?? '1970-01-01 00:00:00');
     $tb = strtotime($b['created_at'] ?? '1970-01-01 00:00:00');
     return $tb <=> $ta;

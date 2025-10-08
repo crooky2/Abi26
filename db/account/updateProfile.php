@@ -36,7 +36,6 @@ if (mb_strlen($displayname) > 60) {
 }
 
 try {
-	// Ensure email uniqueness (except for current user)
 	$check = $pdo->prepare('SELECT id FROM accounts WHERE email = :e AND id <> :id LIMIT 1');
 	$check->execute(['e' => $email, 'id' => $_SESSION['user_id']]);
 	if ($check->fetch()) {

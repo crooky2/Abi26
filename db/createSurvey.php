@@ -2,14 +2,12 @@
 session_start();
 require_once 'db.php';
 
-// Only allow POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 	http_response_code(405);
 	echo 'Method Not Allowed';
 	exit;
 }
 
-// Must be logged in and admin
 if (empty($_SESSION['user_id'])) {
 	$_SESSION['flash_error'] = 'Zugriff verweigert. Bitte zuerst anmelden.';
 	header('Location: /account.php');
@@ -31,7 +29,6 @@ try {
 	exit;
 }
 
-// Collect and validate inputs
 $title = trim($_POST['title'] ?? '');
 $description = trim($_POST['description'] ?? '');
 $expires = $_POST['expires_at'] ?? null;
@@ -49,7 +46,6 @@ if (empty($questions)) {
 }
 
 try {
-	// Insert survey
 	$stmt = $pdo->prepare('INSERT INTO surveys (account_id, title, description, expires_at) VALUES (:a, :t, :d, :e)');
 	$stmt->execute([
 		'a' => $_SESSION['user_id'],
@@ -59,7 +55,6 @@ try {
 	]);
 	$surveyId = $pdo->lastInsertId();
 
-	// Insert questions
 	$qStmt = $pdo->prepare('INSERT INTO survey_questions (survey_id, question_text, question_type, options) VALUES (:s, :q, :type, :opt)');
 	foreach ($questions as $q) {
 		$qText = trim($q['text'] ?? '');
