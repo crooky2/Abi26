@@ -40,3 +40,17 @@
 #loginRegister button:hover { transform: translateY(-1px); background: var(--brand-600); }
 #loginRegister button[value="register"] { background: var(--surface-2); color: var(--text-body); box-shadow: 0 6px 16px rgba(0,0,0,.35); border-color: var(--border); }
 #loginRegister button[value="register"]:hover { background: #0b1220; color: #e5e7eb; }
+
+/* Account profile view/edit panel */
+.panel-title-wrap { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.panel-actions { display:flex; align-items:center; gap:8px; }
+.icon-btn { background: transparent; border: 1px solid var(--border); color: var(--text-body); border-radius: 10px; padding: 6px 10px; cursor: pointer; display:inline-flex; align-items:center; gap:6px; }
+.icon-btn:hover { background: var(--surface-2); }
+.icon-btn-danger { border-color: rgba(239,68,68,0.35); color: #fecaca; }
+.icon-btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+.profile-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.profile-row:last-child { border-bottom: none; }
+.profile-row label { font-weight: 600; color: var(--text-muted); }
+.profile-value { display:flex; align-items:center; min-height: 40px; }
+.value-display { color: var(--text-body); }

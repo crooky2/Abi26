@@ -10,9 +10,12 @@ session_start();
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abi 26 - Account</title>
-    <!-- Split stylesheets: global + account page -->
-    <link rel="stylesheet" href="source/css/generalstyle.css">
-    <link rel="stylesheet" href="source/css/accountstyle.css">
+
+    <!-- <link rel="stylesheet" href="source/css/generalstyle.css">
+    <link rel="stylesheet" href="source/css/accountstyle.css"> -->
+    
+    <link rel="stylesheet" href="source/css/stylesheet.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
         
     </head>
     <body>

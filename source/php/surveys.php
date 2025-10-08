@@ -54,7 +54,22 @@ if (!empty($_SESSION['user_id'])) {
 }
 ?>
 
-<h1>📋 Verfügbare Umfragen</h1>
+<!-- <h1>Umfragen</h1> -->
+<?php if (!empty($_SESSION['flash_success'])): ?>
+    <div class="alert alert-success"><?= htmlspecialchars($_SESSION['flash_success']); unset($_SESSION['flash_success']); ?></div>
+<?php endif; ?>
+<?php if (!empty($_SESSION['flash_error'])): ?>
+    <div class="alert alert-error"><?= htmlspecialchars($_SESSION['flash_error']); unset($_SESSION['flash_error']); ?></div>
+<?php endif; ?>
+<div class="survey-toolbar">
+    <input
+        type="search"
+        id="surveySearch"
+        class="survey-search input-field"
+        placeholder="Umfragen durchsuchen..."
+        aria-label="Umfragen durchsuchen"
+    >
+</div>
 
 <div class="survey-list">
 <?php if (empty($surveys)): ?>
@@ -69,7 +84,6 @@ if (!empty($_SESSION['user_id'])) {
         ?>
         <div class="survey-card">
             <h2><?= htmlspecialchars($s['title']) ?></h2>
-
             <?php if (!empty($s['description'])): ?>
                 <p><?= nl2br(htmlspecialchars($s['description'])) ?></p>
             <?php endif; ?>
@@ -83,54 +97,43 @@ if (!empty($_SESSION['user_id'])) {
                 <span class="status <?= $statusClass ?>"><?= $statusText ?></span>
             </div>
 
-            <?php if ($hasVoted): ?>
-                <p class="voted-text">Du hast bereits an dieser Umfrage teilgenommen.</p>
-
-            <?php elseif (!$isExpired && !empty($s['questions'])): ?>
-                <form action="db/voteForSurvey.php" method="post" class="vote-form">
+            <?php if ($isExpired): ?>
+                <p class="expired-text">Umfrage abgelaufen.</p>
+            <?php elseif (empty($s['questions'])): ?>
+                <p class="no-questions-text">Keine Fragen vorhanden.</p>
+            <?php elseif ($hasVoted): ?>
+                <p class="voted-text">Du hast bereits abgestimmt.</p>
+            <?php else: ?>
+                <form method="post" action="/db/voteForSurvey.php">
                     <input type="hidden" name="survey_id" value="<?= (int)$s['id'] ?>">
-
                     <?php foreach ($s['questions'] as $q): ?>
                         <div class="question-block">
-                            <label><strong><?= htmlspecialchars($q['text']) ?></strong></label><br>
-
+                            <input type="hidden" name="qids[]" value="<?= (int)$q['id'] ?>">
+                            <label><strong><?= htmlspecialchars($q['text']) ?></strong></label>
                             <?php if ($q['type'] === 'text'): ?>
-                                <input 
-                                    type="text" 
-                                    name="answers[<?= (int)$q['id'] ?>]" 
-                                    class="input-field"
-                                    placeholder="Antwort eingeben..."
-                                >
-                            <?php elseif (in_array($q['type'], ['single', 'multiple'])): ?>
-                                <?php foreach ($q['options'] as $opt): ?>
-                                    <label class="option-label">
-                                        <input 
-                                            type="<?= $q['type'] === 'single' ? 'radio' : 'checkbox' ?>"
-                                            name="answers[<?= (int)$q['id'] ?>]<?= $q['type']==='multiple'?'[]':'' ?>"
-                                            value="<?= htmlspecialchars($opt) ?>"
-                                        >
-                                        <?= htmlspecialchars($opt) ?>
+                                <input type="text" name="answers[<?= (int)$q['id'] ?>]" class="input-field" required>
+                            <?php elseif ($q['type'] === 'number'): ?>
+                                <input type="number" name="answers[<?= (int)$q['id'] ?>]" class="input-field" min="0" required>
+                            <?php elseif ($q['type'] === 'single' && !empty($q['options'])): ?>
+                                <?php foreach ($q['options'] as $idx => $opt): $optId = 'q'.$q['id'].'_opt'.$idx; ?>
+                                    <label class="option-label" for="<?= htmlspecialchars($optId) ?>">
+                                        <input type="radio" id="<?= htmlspecialchars($optId) ?>" name="answers[<?= (int)$q['id'] ?>]" value="<?= htmlspecialchars($opt) ?>" <?= $idx === 0 ? 'required' : '' ?>> <?= htmlspecialchars($opt) ?>
                                     </label>
                                 <?php endforeach; ?>
-                            <?php elseif ($q['type'] === 'number'): ?>
-                                <input 
-                                    type="number" 
-                                    name="answers[<?= (int)$q['id'] ?>]" 
-                                    class="input-field"
-                                    min="0"
-                                >
+                            <?php elseif ($q['type'] === 'multiple' && !empty($q['options'])): ?>
+                                <?php foreach ($q['options'] as $idx => $opt): $optId = 'q'.$q['id'].'_opt'.$idx; ?>
+                                    <label class="option-label" for="<?= htmlspecialchars($optId) ?>">
+                                        <input type="checkbox" id="<?= htmlspecialchars($optId) ?>" name="answers[<?= (int)$q['id'] ?>][]" value="<?= htmlspecialchars($opt) ?>" data-multi-group="<?= (int)$q['id'] ?>"> <?= htmlspecialchars($opt) ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <small class="text-muted">Unbekannter Fragetyp.</small>
                             <?php endif; ?>
-                        </div><br>
+                        </div>
                     <?php endforeach; ?>
 
                     <button type="submit" class="vote-btn">Abstimmen</button>
                 </form>
-
-            <?php elseif ($isExpired): ?>
-                <p class="expired-text">Umfrage abgelaufen.</p>
-
-            <?php else: ?>
-                <p class="no-questions-text">Keine Fragen vorhanden.</p>
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
@@ -141,8 +144,8 @@ if (!empty($_SESSION['user_id'])) {
     function layoutMasonry() {
         const container = document.querySelector('.survey-list');
         if (!container) return;
-        const cards = Array.from(container.querySelectorAll('.survey-card'));
-        if (cards.length === 0) return;
+        const cards = Array.from(container.querySelectorAll('.survey-card:not(.filtered-out)'));
+        if (cards.length === 0) { container.style.height = '0px'; return; }
 
         const containerWidth = container.clientWidth;
         const gap = 20;
@@ -153,18 +156,16 @@ if (!empty($_SESSION['user_id'])) {
         container.style.position = 'relative';
         const colHeights = new Array(colCount).fill(0);
 
-        cards.forEach(card => {
-            card.style.width = colWidth + 'px';
-        });
+        cards.forEach(card => { card.style.width = colWidth + 'px'; });
 
         cards.forEach(card => {
             card.style.position = 'absolute';
+            card.style.opacity = '1';
             const minIndex = colHeights.indexOf(Math.min(...colHeights));
             const left = (colWidth + gap) * minIndex;
             const top = colHeights[minIndex];
             card.style.left = left + 'px';
             card.style.top = top + 'px';
-            card.style.opacity = '1';
             const h = card.offsetHeight;
             colHeights[minIndex] = top + h + gap;
         });
@@ -172,9 +173,79 @@ if (!empty($_SESSION['user_id'])) {
         container.style.height = Math.max(...colHeights) - gap + 'px';
     }
 
-    function debounce(fn, wait){
-        let t; return function(){ clearTimeout(t); t = setTimeout(fn, wait); };
+    function debounce(fn, wait){ let t; return function(){ clearTimeout(t); t = setTimeout(fn, wait); }; }
+
+    function applyFilter(q){
+        const query = (q || '').toLowerCase().trim();
+        const allCards = Array.from(document.querySelectorAll('.survey-card'));
+        allCards.forEach(card => {
+            const text = card.textContent.toLowerCase();
+            if (!query || text.indexOf(query) !== -1) card.classList.remove('filtered-out');
+            else card.classList.add('filtered-out');
+        });
+        layoutMasonry();
     }
+
+    const searchInput = document.getElementById('surveySearch');
+    if (searchInput) {
+        const debounced = debounce(() => applyFilter(searchInput.value), 120);
+        searchInput.addEventListener('input', debounced);
+    }
+
+    function attachVoteValidation(){
+        const forms = document.querySelectorAll('form[action="/db/voteForSurvey.php"]');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e){
+                let firstInvalid = null;
+                const qids = Array.from(form.querySelectorAll('input[name="qids[]"]')).map(i => i.value);
+                qids.forEach(qid => {
+                    const block = form.querySelector(`.question-block input[name="qids[]"][value="${qid}"]`)?.closest('.question-block');
+                    const radios = form.querySelectorAll(`input[type="radio"][name="answers[${qid}]"]`);
+                    const checks = form.querySelectorAll(`input[type="checkbox"][name="answers[${qid}][]"]`);
+                    const text = form.querySelector(`input[type="text"][name="answers[${qid}]"]`);
+                    const number = form.querySelector(`input[type="number"][name="answers[${qid}]"]`);
+
+                    let valid = true;
+                    if (radios.length > 0) {
+                        valid = Array.from(radios).some(r => r.checked);
+                    } else if (checks.length > 0) {
+                        valid = Array.from(checks).some(c => c.checked);
+                    } else if (text) {
+                        valid = (text.value || '').trim() !== '';
+                    } else if (number) {
+                        valid = (number.value !== '');
+                    }
+
+                    if (!valid && !firstInvalid) {
+                        firstInvalid = block || form;
+                    }
+                });
+
+                if (firstInvalid) {
+                    e.preventDefault();
+                    let alert = document.querySelector('.alert.alert-error.inline-validation');
+                    if (!alert) {
+                        alert = document.createElement('div');
+                        alert.className = 'alert alert-error inline-validation';
+                        alert.style.marginTop = '10px';
+                        alert.textContent = 'Bitte alle Fragen beantworten.';
+                        const header = document.querySelector('h1');
+                        if (header && header.parentNode) {
+                            header.parentNode.insertBefore(alert, header.nextSibling);
+                        } else {
+                            document.body.prepend(alert);
+                        }
+                        setTimeout(() => { alert && alert.remove(); }, 4000);
+                    } else {
+                        alert.textContent = 'Bitte alle Fragen beantworten.';
+                    }
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', attachVoteValidation);
 
     window.addEventListener('load', layoutMasonry);
     window.addEventListener('resize', debounce(layoutMasonry, 100));

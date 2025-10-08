@@ -9,9 +9,11 @@ session_start();
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abi 26 - Startseite</title>
-    <!-- Split stylesheets: global + page specific -->
-    <link rel="stylesheet" href="source/css/generalstyle.css">
-    <link rel="stylesheet" href="source/css/indexstyle.css">
+
+    <!-- <link rel="stylesheet" href="source/css/generalstyle.css">
+    <link rel="stylesheet" href="source/css/indexstyle.css"> -->
+    
+    <link rel="stylesheet" href="source/css/stylesheet.css">
     </head>
     <body>
         <?php include "source/php/header.php"; ?>
