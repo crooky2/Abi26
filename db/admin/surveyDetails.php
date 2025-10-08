@@ -4,7 +4,6 @@ require_once '../db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Admin-only guard
 if (empty($_SESSION['user_id'])) {
     http_response_code(403);
     echo json_encode(['error' => 'forbidden']);
@@ -34,7 +33,6 @@ if ($surveyId <= 0) {
 }
 
 try {
-    // Survey meta
     $s = $pdo->prepare('SELECT s.id, s.title, s.description, s.expires_at, s.created_at, a.displayname AS creator
                         FROM surveys s JOIN accounts a ON s.account_id = a.id WHERE s.id = :id');
     $s->execute(['id' => $surveyId]);
@@ -45,12 +43,10 @@ try {
         exit;
     }
 
-    // Questions
     $q = $pdo->prepare('SELECT id, question_text, question_type, options FROM survey_questions WHERE survey_id = :sid ORDER BY id ASC');
-    $q->execute(['sid' => $surveyId]);
+    $q->execute(params: ['sid' => $surveyId]);
     $questions = $q->fetchAll(PDO::FETCH_ASSOC);
 
-    // Responses with accounts (created_at removed to match schema)
     $r = $pdo->prepare('SELECT r.id as response_id, acc.id as account_id, acc.displayname, acc.email
                         FROM survey_responses r LEFT JOIN accounts acc ON r.account_id = acc.id WHERE r.survey_id = :sid');
     $r->execute(['sid' => $surveyId]);
@@ -68,7 +64,6 @@ try {
         }
     }
 
-    // Build aggregates per question (counts per answer value) and per-answer voters
     $detail = [];
     foreach ($questions as $qrow) {
         $qid = (int)$qrow['id'];
@@ -85,7 +80,6 @@ try {
         foreach ($qAnswers as $aRow) {
             $respId = (int)$aRow['response_id'];
             $val = trim((string)$aRow['answer_text']);
-            // find voter info from responses list
             $acc = null;
             foreach ($responses as $rr) {
                 if ((int)$rr['response_id'] === $respId) { $acc = $rr; break; }
@@ -94,7 +88,6 @@ try {
             $voterEmail = $acc['email'] ?? '';
 
             if ($type === 'multiple') {
-                // multiple selections are stored as one row per selected option (as implemented in voteForSurvey.php)
                 $counts[$val] = ($counts[$val] ?? 0) + 1;
                 $votersByAnswer[$val] = $votersByAnswer[$val] ?? [];
                 $votersByAnswer[$val][] = ['name' => $voterName, 'email' => $voterEmail];
@@ -109,7 +102,6 @@ try {
             }
         }
 
-        // Ensure options appear even if 0 for choice questions
         foreach ($opts as $o) { if (!isset($counts[$o])) $counts[$o] = 0; }
 
         $detail[] = [
@@ -133,4 +125,3 @@ try {
     echo json_encode(['error' => 'db', 'message' => $e->getMessage()]);
     exit;
 }
-    // end

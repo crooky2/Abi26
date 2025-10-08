@@ -39,7 +39,6 @@ if ($surveyId <= 0) {
 }
 
 try {
-    // Set expires_at to one minute in the past
     $nowMinus1 = date('Y-m-d H:i:s', time() - 60);
     $upd = $pdo->prepare('UPDATE surveys SET expires_at = :exp WHERE id = :id');
     $upd->execute(['exp' => $nowMinus1, 'id' => $surveyId]);
