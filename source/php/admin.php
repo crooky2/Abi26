@@ -93,7 +93,7 @@ foreach ($surveyRows as $s) {
     <div class="panel" style="padding:16px;">
         <h2 style="margin-top:0;">Umfragen-Info</h2>
         <div style="display:flex; gap:8px; align-items:center;">
-            <input type="search" id="adminSurveySearch" class="input-field" placeholder="Suche nach Titel/Ersteller..." aria-label="Umfragen durchsuchen" style="flex:1;">
+            <input type="search" id="adminSurveySearch" class="input-field" placeholder="Umfragen durchsuchen..." aria-label="Umfragen durchsuchen" style="flex:1;">
         </div>
         <div id="adminSurveyResults" style="margin-top:10px; max-height: 240px; overflow:auto; border:1px solid var(--border); border-radius: 10px; padding:6px;"></div>
 
@@ -139,8 +139,11 @@ foreach ($surveyRows as $s) {
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-                <div style="margin-top:12px;">
+                <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
                     <button type="button" id="adminDetailsBtn" class="btn btn-secondary">Details anzeigen</button>
+                    <?php if (!$isExpired): ?>
+                        <button type="button" id="adminCloseBtn" class="btn btn-primary" data-id="<?= (int)$latest['id'] ?>">Umfrage schließen</button>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
                 <p class="survey-meta">Noch keine Umfragen vorhanden.</p>
@@ -164,7 +167,7 @@ foreach ($surveyRows as $s) {
 
             <div class="form-row">
                 <label>Beschreibung (optional):<br>
-                    <textarea name="description" rows="3" class="input-field"></textarea>
+                    <textarea name="description" rows="6" class="input-field" style="resize:none;"></textarea>
                 </label>
             </div>
 
@@ -533,8 +536,9 @@ foreach ($surveyRows as $s) {
                     `).join('')}
                 </div>
             ` : ''}
-                        <div style="margin-top:12px;">
+                        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
                             <button type="button" id="adminDetailsBtn" class="btn btn-secondary" data-id="${s.id}">Details anzeigen</button>
+                            ${!expired ? `<button type="button" id="adminCloseBtn" class="btn btn-primary" data-id="${s.id}">Umfrage schließen</button>` : ''}
                         </div>
         `;
                     // highlight selection in list
@@ -543,6 +547,10 @@ foreach ($surveyRows as $s) {
                     // wire details button
                     const btn = detailsEl.querySelector('#adminDetailsBtn');
                     if (btn) btn.addEventListener('click', ()=> loadDetails(s.id));
+
+                    // wire close button
+                    const closeBtn = detailsEl.querySelector('#adminCloseBtn');
+                    if (closeBtn) closeBtn.addEventListener('click', ()=> closeSurvey(s.id));
                 }
 
                 if (listEl) {
@@ -569,6 +577,43 @@ foreach ($surveyRows as $s) {
                 const initial = data.slice(0, 20);
                 renderResults(initial);
                 if (latestId) renderDetailsById(latestId);
+
+                async function closeSurvey(id){
+                    if (!confirm('Umfrage jetzt schließen? Danach kann niemand mehr abstimmen.')) return;
+                    try {
+                        const res = await fetch('/db/admin/closeSurvey.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+                            body: 'survey_id=' + encodeURIComponent(id)
+                        });
+                        const text = await res.text();
+                        let payload = null;
+                        try { payload = text ? JSON.parse(text) : null; } catch(parseErr) {
+                            console.error('Close: Non-JSON response', { status: res.status, text });
+                            throw new Error(`Unerwartete Antwort (Status ${res.status}).`);
+                        }
+                        if (!res.ok || (payload && payload.error)) {
+                            const msg = payload && payload.message ? payload.message : (payload && payload.error ? payload.error : `HTTP ${res.status}`);
+                            console.error('Close: Server error', { status: res.status, payload });
+                            throw new Error(msg);
+                        }
+                        // Update local cache and re-render
+                        const idx = data.findIndex(x => x.id == id);
+                        if (idx !== -1) {
+                            data[idx].expires_at = payload.expires_at || new Date(Date.now()-60000).toISOString().slice(0,19).replace('T',' ');
+                        }
+                        // Refresh list rendering and details
+                        const q = (searchEl && searchEl.value || '').trim().toLowerCase();
+                        const items = !q ? data.slice(0, 20) : data.filter(s =>
+                            String(s.title || '').toLowerCase().includes(q) || String(s.creator || '').toLowerCase().includes(q)
+                        ).slice(0, 50);
+                        renderResults(items);
+                        renderDetailsById(id);
+                    } catch(e) {
+                        showInlineError(`Fehler beim Schließen der Umfrage: ${escapeHtml(e.message || String(e))}`);
+                    }
+                }
 
                 async function loadDetails(id){
                     const url = `/db/admin/surveyDetails.php?survey_id=${encodeURIComponent(id)}`;

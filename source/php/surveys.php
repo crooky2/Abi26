@@ -98,7 +98,7 @@ if (!empty($_SESSION['user_id'])) {
             </div>
 
             <?php if ($isExpired): ?>
-                <p class="expired-text">Umfrage abgelaufen.</p>
+                <!-- <p class="expired-text">Umfrage abgelaufen.</p> -->
             <?php elseif (empty($s['questions'])): ?>
                 <p class="no-questions-text">Keine Fragen vorhanden.</p>
             <?php elseif ($hasVoted): ?>
