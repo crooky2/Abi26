@@ -12,8 +12,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$user || !$user['admin']) {
     die("Access denied. Admins only.");
 }
-?>
-<?php
+
 $surveyRows = [];
 try {
     $sStmt = $pdo->query("SELECT s.id, s.title, s.description, s.expires_at, s.created_at, a.displayname AS creator
