@@ -5,9 +5,9 @@
         <a class="header-logo" href="/">Abi26</a>
         <nav class="header-nav">
                 <?php if (!empty($_SESSION['loggedIn'])) { ?>
-                     <a href="/account.php">Account</a>
+                     <a href="/account">Account</a>
                 <?php } else { ?>
-                     <a href="/account.php">Anmelden / Registrieren</a>
+                     <a href="/account">Anmelden / Registrieren</a>
                 <?php } ?>
         
         </nav>
@@ -22,9 +22,9 @@
         <nav class="drawer-nav">
                 <a href="/">Home</a>
                 <?php if (!empty($_SESSION['loggedIn'])) { ?>
-                     <a href="/account.php">Account</a>
+                     <a href="/account">Account</a>
                 <?php } else { ?>
-                     <a href="/account.php">Anmelden / Registrieren</a>
+                     <a href="/account">Anmelden / Registrieren</a>
                 <?php } ?>
         </nav>
 </aside>
@@ -51,7 +51,7 @@
         drawer.setAttribute('aria-hidden','true');
         document.body.style.overflow = '';
     }
-    
+
     btn && btn.addEventListener('click', open);
     close && close.addEventListener('click', closeDrawer);
     backdrop && backdrop.addEventListener('click', closeDrawer);

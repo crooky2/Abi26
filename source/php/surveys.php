@@ -52,6 +52,31 @@ if (!empty($_SESSION['user_id'])) {
     $stmt->execute(['uid' => $_SESSION['user_id']]);
     $userVoted = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'survey_id');
 }
+
+// Sort surveys: active & not answered first, then active & answered, then expired; within groups by created_at DESC
+$surveysList = array_values($surveys);
+usort($surveysList, function($a, $b) use ($userVoted) {
+    $now = time();
+    $aExpired = ($a['expires_at'] && strtotime($a['expires_at']) < $now);
+    $bExpired = ($b['expires_at'] && strtotime($b['expires_at']) < $now);
+    $aVoted = in_array($a['id'], $userVoted);
+    $bVoted = in_array($b['id'], $userVoted);
+
+    $rank = function($expired, $voted){
+        if (!$expired && !$voted) return 0; // active + not answered
+        if (!$expired && $voted)  return 1; // active + answered
+        return 2;                            // expired (answered or not)
+    };
+
+    $ra = $rank($aExpired, $aVoted);
+    $rb = $rank($bExpired, $bVoted);
+    if ($ra !== $rb) return $ra <=> $rb;
+
+    // Same group: newest first by created_at desc
+    $ta = strtotime($a['created_at'] ?? '1970-01-01 00:00:00');
+    $tb = strtotime($b['created_at'] ?? '1970-01-01 00:00:00');
+    return $tb <=> $ta;
+});
 ?>
 
 <!-- <h1>Umfragen</h1> -->
@@ -75,7 +100,7 @@ if (!empty($_SESSION['user_id'])) {
 <?php if (empty($surveys)): ?>
     <p>Keine Umfragen vorhanden.</p>
 <?php else: ?>
-    <?php foreach ($surveys as $s): ?>
+    <?php foreach ($surveysList as $s): ?>
         <?php
             $isExpired   = ($s['expires_at'] && strtotime($s['expires_at']) < time());
             $statusClass = $isExpired ? 'expired' : 'active';
@@ -103,6 +128,13 @@ if (!empty($_SESSION['user_id'])) {
                 <p class="no-questions-text">Keine Fragen vorhanden.</p>
             <?php elseif ($hasVoted): ?>
                 <p class="voted-text">Du hast bereits abgestimmt.</p>
+                <form method="post" action="/db/deleteMyResponse.php" onsubmit="return confirm('Möchtest du deine Antwort wirklich löschen?');" style="margin-top:8px;">
+                    <input type="hidden" name="survey_id" value="<?= (int)$s['id'] ?>">
+                    <button type="submit" class="btn btn-secondary" style="border-color: rgba(239,68,68,0.35); color: #ad1111ff; background: rgba(255, 0, 0, 0.05);">
+                        <span class="material-icons-outlined" aria-hidden="true">delete</span>
+                        Meine Antwort löschen
+                    </button>
+                </form>
             <?php else: ?>
                 <form method="post" action="/db/voteForSurvey.php">
                     <input type="hidden" name="survey_id" value="<?= (int)$s['id'] ?>">

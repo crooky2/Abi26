@@ -143,7 +143,12 @@ foreach ($surveyRows as $s) {
                     <button type="button" id="adminDetailsBtn" class="btn btn-secondary">Details anzeigen</button>
                     <?php if (!$isExpired): ?>
                         <button type="button" id="adminCloseBtn" class="btn btn-primary" data-id="<?= (int)$latest['id'] ?>">Umfrage schließen</button>
+                        <button type="button" id="adminResetBtn" class="btn btn-secondary" data-id="<?= (int)$latest['id'] ?>">Daten zurücksetzen</button>
                     <?php endif; ?>
+                    <button type="button" id="adminDeleteBtn" class="icon-btn icon-btn-danger" data-id="<?= (int)$latest['id'] ?>">
+                        <span class="material-icons-outlined" aria-hidden="true">delete</span>
+                        Umfrage löschen
+                    </button>
                 </div>
             <?php else: ?>
                 <p class="survey-meta">Noch keine Umfragen vorhanden.</p>
@@ -517,10 +522,17 @@ foreach ($surveyRows as $s) {
                 ${s.expires_at ? ` · Läuft ab am ${escapeHtml(fmtDate(s.expires_at))}` : ''}
             </div>
             ${s.description ? `<p style="margin-top:10px;">${escapeHtml(s.description)}</p>` : ''}
-            <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-                <span class="status">Fragen: ${Number(s.question_count||0)}</span>
-                <span class="status">Antworten: ${Number(s.response_count||0)}</span>
-            </div>
+                        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" id="adminDetailsBtn" class="btn btn-secondary" data-id="${s.id}">Details anzeigen</button>
+                            ${!expired ? `
+                                <button type=\"button\" id=\"adminCloseBtn\" class=\"btn btn-primary\" data-id=\"${s.id}\">Umfrage schließen</button>
+                                <button type=\"button\" id=\"adminResetBtn\" class=\"btn btn-secondary\" data-id=\"${s.id}\">Daten zurücksetzen</button>
+                            ` : ''}
+                            <button type="button" id="adminDeleteBtn" class="icon-btn icon-btn-danger" data-id="${s.id}" style="border-color: rgba(239,68,68,0.35); color: #ad1111ff; background: rgba(255, 0, 0, 0.05);">
+                                <span class="material-icons-outlined" aria-hidden="true">delete</span>
+                                Umfrage löschen
+                            </button>
+                        </div>
             ${Array.isArray(s.questions) && s.questions.length ? `
                 <div style="margin-top:10px;">
                     ${s.questions.map((q, i) => `
@@ -535,22 +547,21 @@ foreach ($surveyRows as $s) {
                         </div>
                     `).join('')}
                 </div>
-            ` : ''}
-                        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-                            <button type="button" id="adminDetailsBtn" class="btn btn-secondary" data-id="${s.id}">Details anzeigen</button>
-                            ${!expired ? `<button type="button" id="adminCloseBtn" class="btn btn-primary" data-id="${s.id}">Umfrage schließen</button>` : ''}
-                        </div>
+            ` : ''}  
         `;
-                    // highlight selection in list
                     [...listEl.querySelectorAll('.result-item')].forEach(el => el.style.background = el.dataset.id == id ? 'rgba(255,255,255,0.04)' : 'transparent');
 
-                    // wire details button
                     const btn = detailsEl.querySelector('#adminDetailsBtn');
                     if (btn) btn.addEventListener('click', ()=> loadDetails(s.id));
 
-                    // wire close button
                     const closeBtn = detailsEl.querySelector('#adminCloseBtn');
                     if (closeBtn) closeBtn.addEventListener('click', ()=> closeSurvey(s.id));
+
+                    const resetBtn = detailsEl.querySelector('#adminResetBtn');
+                    if (resetBtn) resetBtn.addEventListener('click', ()=> resetSurvey(s.id));
+
+                    const deleteBtn = detailsEl.querySelector('#adminDeleteBtn');
+                    if (deleteBtn) deleteBtn.addEventListener('click', ()=> deleteSurvey(s.id));
                 }
 
                 if (listEl) {
@@ -612,6 +623,84 @@ foreach ($surveyRows as $s) {
                         renderDetailsById(id);
                     } catch(e) {
                         showInlineError(`Fehler beim Schließen der Umfrage: ${escapeHtml(e.message || String(e))}`);
+                    }
+                }
+
+                async function resetSurvey(id){
+                    if (!confirm('Alle Antworten dieser Umfrage löschen? Das kann nicht rückgängig gemacht werden.')) return;
+                    try {
+                        const res = await fetch('/db/admin/resetSurveyData.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+                            body: 'survey_id=' + encodeURIComponent(id)
+                        });
+                        const text = await res.text();
+                        let payload = null;
+                        try { payload = text ? JSON.parse(text) : null; } catch(parseErr) {
+                            console.error('Reset: Non-JSON response', { status: res.status, text });
+                            throw new Error(`Unerwartete Antwort (Status ${res.status}).`);
+                        }
+                        if (!res.ok || (payload && payload.error)) {
+                            const msg = payload && payload.message ? payload.message : (payload && payload.error ? payload.error : `HTTP ${res.status}`);
+                            console.error('Reset: Server error', { status: res.status, payload });
+                            throw new Error(msg);
+                        }
+                        // Update local cache: set response_count to 0
+                        const idx = data.findIndex(x => x.id == id);
+                        if (idx !== -1) {
+                            data[idx].response_count = 0;
+                        }
+                        // Rerender the list (preserve search) and details
+                        const q = (searchEl && searchEl.value || '').trim().toLowerCase();
+                        const items = !q ? data.slice(0, 20) : data.filter(s =>
+                            String(s.title || '').toLowerCase().includes(q) || String(s.creator || '').toLowerCase().includes(q)
+                        ).slice(0, 50);
+                        renderResults(items);
+                        renderDetailsById(id);
+                    } catch(e) {
+                        showInlineError(`Fehler beim Zurücksetzen: ${escapeHtml(e.message || String(e))}`);
+                    }
+                }
+
+                async function deleteSurvey(id){
+                    if (!confirm('Diese Umfrage vollständig löschen? Alle Fragen und Antworten werden dauerhaft entfernt.')) return;
+                    try {
+                        const res = await fetch('/db/admin/deleteSurvey.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+                            body: 'survey_id=' + encodeURIComponent(id)
+                        });
+                        const text = await res.text();
+                        let payload = null;
+                        try { payload = text ? JSON.parse(text) : null; } catch(parseErr) {
+                            console.error('Delete: Non-JSON response', { status: res.status, text });
+                            throw new Error(`Unerwartete Antwort (Status ${res.status}).`);
+                        }
+                        if (!res.ok || (payload && payload.error)) {
+                            const msg = payload && payload.message ? payload.message : (payload && payload.error ? payload.error : `HTTP ${res.status}`);
+                            console.error('Delete: Server error', { status: res.status, payload });
+                            throw new Error(msg);
+                        }
+                        // Remove from local data and refresh UI
+                        const idx = data.findIndex(x => x.id == id);
+                        if (idx !== -1) { data.splice(idx, 1); }
+                        // Re-render results based on current search
+                        const q = (searchEl && searchEl.value || '').trim().toLowerCase();
+                        const items = !q ? data.slice(0, 20) : data.filter(s =>
+                            String(s.title || '').toLowerCase().includes(q) || String(s.creator || '').toLowerCase().includes(q)
+                        ).slice(0, 50);
+                        renderResults(items);
+                        // Clear details if the deleted survey was shown, or show next available
+                        const next = data[0] ? data[0].id : null;
+                        if (next) {
+                            renderDetailsById(next);
+                        } else if (detailsEl) {
+                            detailsEl.innerHTML = '<p class="survey-meta">Noch keine Umfragen vorhanden.</p>';
+                        }
+                    } catch(e) {
+                        showInlineError(`Fehler beim Löschen: ${escapeHtml(e.message || String(e))}`);
                     }
                 }
 

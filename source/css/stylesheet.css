@@ -1,4 +1,4 @@
 /* Split CSS: import order matters */
-@import url('./generalstyle.css');
-@import url('./accountstyle.css');
-@import url('./indexstyle.css');
+@import url("./generalstyle.css");
+@import url("./accountstyle.css");
+@import url("./indexstyle.css");

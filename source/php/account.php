@@ -46,7 +46,7 @@
 			</a>
 			<form method="post" action="/db/account/resetData.php" onsubmit="return confirm('Bist du sicher? Dies löscht deine Antworten auf Umfragen dauerhaft.');">
 				<button type="submit" class="btn" style="border-color: rgba(239,68,68,0.35); color: #ad1111ff; background: rgba(255, 0, 0, 0.05);">
-					<span class="material-icons-outlined" aria-hidden="true">delete_forever</span>
+					<span class="material-icons-outlined" aria-hidden="true">delete</span>
 					Eigene Umfragedaten löschen
 				</button>
 			</form>
