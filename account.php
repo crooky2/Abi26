@@ -1,7 +1,6 @@
 <?php
-
 session_start();
-
+require_once __DIR__ . '/config.php';
 ?>
 
 <!DOCTYPE html>
@@ -14,18 +13,18 @@ session_start();
     <!-- <link rel="stylesheet" href="source/css/generalstyle.css">
     <link rel="stylesheet" href="source/css/accountstyle.css"> -->
 
-    <link rel="stylesheet" href="source/css/stylesheet.css">
+    <link rel="stylesheet" href="<?= BASE_PATH ?>/source/css/stylesheet.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
         
     </head>
     <body>
-        <?php include "source/php/header.php"; ?>
+        <?php include ROOT_PATH . "/source/php/header.php"; ?>
 
         <?php 
             if (!empty($_SESSION['loggedIn'])) {
-                include "source/php/account.php";
+                include ROOT_PATH . "/source/php/account.php";
             } else {
-                include "source/php/LoginRegister.php";
+                include ROOT_PATH . "/source/php/LoginRegister.php";
             }
         ?>
     </body>

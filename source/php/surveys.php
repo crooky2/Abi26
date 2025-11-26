@@ -1,5 +1,5 @@
 <?php
-require_once 'db/db.php';
+require_once ROOT_PATH . '/db/db.php';
 
 $stmt = $pdo->query("
     SELECT 
@@ -126,7 +126,7 @@ usort($surveysList, function($a, $b) use ($userVoted) {
                 <p class="no-questions-text">Keine Fragen vorhanden.</p>
             <?php elseif ($hasVoted): ?>
                 <p class="voted-text">Du hast bereits abgestimmt.</p>
-                <form method="post" action="/db/deleteMyResponse.php" onsubmit="return confirm('Möchtest du deine Antwort wirklich löschen?');" style="margin-top:8px;">
+                <form method="post" action="<?= BASE_PATH ?>/db/deleteMyResponse.php" onsubmit="return confirm('Möchtest du deine Antwort wirklich löschen?');" style="margin-top:8px;">
                     <input type="hidden" name="survey_id" value="<?= (int)$s['id'] ?>">
                     <button type="submit" class="btn btn-secondary" style="border-color: rgba(239,68,68,0.35); color: #ad1111ff; background: rgba(255, 0, 0, 0.05);">
                         <span class="material-icons-outlined" aria-hidden="true">delete</span>
@@ -134,7 +134,7 @@ usort($surveysList, function($a, $b) use ($userVoted) {
                     </button>
                 </form>
             <?php else: ?>
-                <form method="post" action="/db/voteForSurvey.php">
+                <form method="post" action="<?= BASE_PATH ?>/db/voteForSurvey.php">
                     <input type="hidden" name="survey_id" value="<?= (int)$s['id'] ?>">
                     <?php foreach ($s['questions'] as $q): ?>
                         <div class="question-block">
@@ -223,7 +223,8 @@ usort($surveysList, function($a, $b) use ($userVoted) {
     }
 
     function attachVoteValidation(){
-        const forms = document.querySelectorAll('form[action="/db/voteForSurvey.php"]');
+        const voteAction = (typeof window !== 'undefined' && window.BASE_PATH ? window.BASE_PATH : '') + '/db/voteForSurvey.php';
+        const forms = document.querySelectorAll(`form[action="${voteAction}"]`);
         forms.forEach(form => {
             form.addEventListener('submit', function(e){
                 let firstInvalid = null;

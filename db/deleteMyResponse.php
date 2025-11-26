@@ -1,23 +1,24 @@
 <?php
 session_start();
-require_once 'db.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['flash_error'] = 'Ungültige Anfrage.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }
 
 if (empty($_SESSION['user_id'])) {
     $_SESSION['flash_error'] = 'Bitte zuerst anmelden.';
-    header('Location: /account.php');
+    header('Location: ' . (BASE_PATH ?: '/') . 'account.php');
     exit;
 }
 
 $surveyId = isset($_POST['survey_id']) ? (int)$_POST['survey_id'] : 0;
 if ($surveyId <= 0) {
     $_SESSION['flash_error'] = 'Fehlende Umfrage-ID.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }
 
@@ -26,7 +27,7 @@ try {
     $s->execute(['id' => $surveyId]);
     if (!$s->fetch(PDO::FETCH_ASSOC)) {
         $_SESSION['flash_error'] = 'Diese Umfrage existiert nicht.';
-        header('Location: /');
+        header('Location: ' . (BASE_PATH ?: '/') );
         exit;
     }
 
@@ -36,7 +37,7 @@ try {
 
     if (!$respIds) {
         $_SESSION['flash_error'] = 'Keine Antwort gefunden, die gelöscht werden kann.';
-        header('Location: /');
+        header('Location: ' . (BASE_PATH ?: '/') );
         exit;
     }
 
@@ -52,11 +53,11 @@ try {
     $pdo->commit();
 
     $_SESSION['flash_success'] = 'Deine Antwort wurde gelöscht.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) { $pdo->rollBack(); }
     $_SESSION['flash_error'] = 'Fehler beim Löschen: ' . htmlspecialchars($e->getMessage());
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }

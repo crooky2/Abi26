@@ -1,10 +1,11 @@
 <?php
 session_start();
-require_once 'db.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['flash_error'] = 'Ungültige Anfrage.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }
 
@@ -13,7 +14,7 @@ $answers  = $_POST['answers'] ?? [];
 
 if ($surveyId <= 0 || empty($answers)) {
     $_SESSION['flash_error'] = 'Fehler: Keine gültigen Antworten oder Umfrage-ID.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }
 
@@ -23,13 +24,13 @@ $survey = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$survey) {
     $_SESSION['flash_error'] = 'Diese Umfrage existiert nicht.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }
 
 if ($survey['expires_at'] && strtotime($survey['expires_at']) < time()) {
     $_SESSION['flash_error'] = 'Diese Umfrage ist abgelaufen.';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }
 
@@ -40,20 +41,20 @@ foreach ($questions as $q) {
     $qid = (string)$q['id'];
     if (!array_key_exists($qid, $answers)) {
         $_SESSION['flash_error'] = 'Bitte alle Fragen beantworten.';
-        header('Location: /');
+        header('Location: ' . (BASE_PATH ?: '/') );
         exit;
     }
     $val = $answers[$qid];
     if (is_array($val)) {
         if (count(array_filter($val, fn($v) => trim((string)$v) !== '')) === 0) {
             $_SESSION['flash_error'] = 'Bitte alle Fragen beantworten.';
-            header('Location: /');
+            header('Location: ' . (BASE_PATH ?: '/') );
             exit;
         }
     } else {
         if (trim((string)$val) === '') {
             $_SESSION['flash_error'] = 'Bitte alle Fragen beantworten.';
-            header('Location: /');
+            header('Location: ' . (BASE_PATH ?: '/') );
             exit;
         }
     }
@@ -65,7 +66,7 @@ if ($accountId) {
     $check->execute(['sid' => $surveyId, 'aid' => $accountId]);
     if ($check->fetch()) {
         $_SESSION['flash_error'] = 'Du hast bereits an dieser Umfrage teilgenommen.';
-        header('Location: /');
+        header('Location: ' . (BASE_PATH ?: '/') );
         exit;
     }
 }
@@ -102,12 +103,12 @@ try {
     $pdo->commit();
 
     $_SESSION['flash_success'] = 'Danke fürs Abstimmen!';
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) { $pdo->rollBack(); }
     $_SESSION['flash_error'] = 'Fehler beim Speichern: ' . htmlspecialchars($e->getMessage());
-    header('Location: /');
+    header('Location: ' . (BASE_PATH ?: '/') );
     exit;
 }

@@ -1,4 +1,4 @@
-<form method="post" id="loginRegister" action="/db/loginRegister.php">
+<form method="post" id="loginRegister" action="<?= BASE_PATH ?>/db/loginRegister.php">
     <h2>Anmelden / Registrieren</h2>
     <?php if (!empty($_SESSION['flash_error'])): ?>
         <div class="alert alert-error">
@@ -41,7 +41,7 @@ document.getElementById('loginRegister').addEventListener('submit', async functi
         const email = document.getElementById('email').value.trim();
         if (!email) return;
         try {
-            const resp = await fetch('/db/checkUser.php', {
+            const resp = await fetch((window.BASE_PATH || '') + '/db/checkUser.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `email=${encodeURIComponent(email)}`

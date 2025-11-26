@@ -1,6 +1,7 @@
 <?php
 session_start();
-require_once '../db.php';
+require_once dirname(__DIR__) . '/../config.php';
+require_once __DIR__ . '/../db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 	http_response_code(405);
@@ -10,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 if (empty($_SESSION['user_id'])) {
 	$_SESSION['flash_error'] = 'Bitte zuerst anmelden.';
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 }
 
@@ -42,6 +43,6 @@ try {
 	$_SESSION['flash_error'] = 'Fehler beim Zurücksetzen: ' . htmlspecialchars($e->getMessage());
 }
 
-header('Location: /account.php');
+header('Location: ' . base_url('account.php'));
 exit;
 ?>

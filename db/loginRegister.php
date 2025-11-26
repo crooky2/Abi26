@@ -1,6 +1,7 @@
 <?php
 session_start();
-require_once 'db.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
@@ -10,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($email === '' || $password === '') {
     $_SESSION['flash_error'] = 'Bitte E-Mail und Passwort eingeben.';
-    header('Location: /account.php');
+    header('Location: ' . base_url('account.php'));
     exit;
     }
 
@@ -19,34 +20,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        // LOGIN
+        // login
         if (password_verify($password, $user['password'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['email'] = $user['email'];
             $_SESSION['displayname'] = $user['displayname'] ?? $user['email'];
             $_SESSION['loggedIn'] = true;
-            header('Location: /');
+            header('Location: ' . base_url('') );
             exit;
         } else {
             $_SESSION['flash_error'] = 'Falsches Passwort.';
-            header('Location: /account.php');
+            header('Location: ' . base_url('account.php'));
             exit;
         }
     } else {
-        // REGISTRATION
+        // register
         if ($confirm === '') {
             $_SESSION['flash_error'] = 'Bitte Passwort bestätigen, um ein neues Konto zu erstellen.';
-            header('Location: /account.php');
+            header('Location: ' . base_url('account.php'));
             exit;
         }
         if ($password !== $confirm) {
             $_SESSION['flash_error'] = 'Die Passwörter stimmen nicht überein.';
-            header('Location: /account.php');
+            header('Location: ' . base_url('account.php'));
             exit;
         }
         if ($displayname === '') {
             $_SESSION['flash_error'] = 'Bitte Anzeigename eingeben.';
-            header('Location: /account.php');
+            header('Location: ' . base_url('account.php'));
             exit;
         }
 
@@ -58,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $_SESSION['email'] = $email;
         $_SESSION['displayname'] = $displayname;
         $_SESSION['loggedIn'] = true;
-        header('Location: /');
+        header('Location: ' . base_url('') );
         exit;
     }
 }

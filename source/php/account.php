@@ -22,7 +22,7 @@
 			</div>
 		</div>
 
-		<form id="profileForm" method="post" action="/db/account/updateProfile.php" style="margin-top:12px;">
+		<form id="profileForm" method="post" action="<?= BASE_PATH ?>/db/account/updateProfile.php" style="margin-top:12px;">
 			<div class="profile-row">
 				<label for="email">E-Mail</label>
 				<div class="profile-value">
@@ -40,11 +40,11 @@
 		</form>
 
 		<div style="margin-top:14px; display:flex; gap:8px;">
-			<a class="btn btn-secondary" href="/db/logout.php">
+			<a class="btn btn-secondary" href="<?= BASE_PATH ?>/db/logout.php">
 				<span class="material-icons-outlined" aria-hidden="true">logout</span>
 				Abmelden
 			</a>
-			<form method="post" action="/db/account/resetData.php" onsubmit="return confirm('Bist du sicher? Dies löscht deine Antworten auf Umfragen dauerhaft.');">
+			<form method="post" action="<?= BASE_PATH ?>/db/account/resetData.php" onsubmit="return confirm('Bist du sicher? Dies löscht deine Antworten auf Umfragen dauerhaft.');">
 				<button type="submit" class="btn" style="border-color: rgba(239,68,68,0.35); color: #ad1111ff; background: rgba(255, 0, 0, 0.05);">
 					<span class="material-icons-outlined" aria-hidden="true">delete</span>
 					Eigene Umfragedaten löschen
@@ -56,7 +56,7 @@
 	<?php 
 	$isAdmin = false;
 	if (!empty($_SESSION['user_id'])) {
-		require_once 'db/db.php';
+		require_once ROOT_PATH . '/db/db.php';
 		try {
 			$stmt = $pdo->prepare('SELECT admin FROM accounts WHERE id = :id');
 			$stmt->execute(['id' => $_SESSION['user_id']]);
@@ -66,7 +66,7 @@
 			$isAdmin = false;
 		}
 	}
-	if ($isAdmin) { include "admin.php"; }
+	if ($isAdmin) { include ROOT_PATH . '/source/php/admin.php'; }
 	?>
 </div>
 

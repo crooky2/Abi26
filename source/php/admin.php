@@ -1,5 +1,5 @@
 <?php
-require_once 'db/db.php';
+require_once ROOT_PATH . '/db/db.php';
 
 if (empty($_SESSION['user_id'])) {
     die("Access denied. You must be logged in.");
@@ -157,7 +157,7 @@ foreach ($surveyRows as $s) {
     </div>
     <div class="admin-create">
 
-        <form method="post" id="createSurvey" class="panel panel-admin" action="/db/createSurvey.php">
+        <form method="post" id="createSurvey" class="panel panel-admin" action="<?= BASE_PATH ?>/db/createSurvey.php">
             <div class="form-row">
                 <label>Titel:<br>
                     <input type="text" name="title" required class="input-field">
@@ -186,6 +186,7 @@ foreach ($surveyRows as $s) {
 
         <script>
             (function() {
+                const BASE = window.BASE_PATH || '';
                 let qCounter = 0;
 
                 const form = document.getElementById('createSurvey');
@@ -452,7 +453,6 @@ foreach ($surveyRows as $s) {
         </script>
 
         <script>
-            // Info panel: search and details rendering
             (function() {
                 const data = Array.isArray(window.adminSurveyData) ? window.adminSurveyData : [];
                 const latestId = window.latestSurveyId || (data[0] ? data[0].id : null);
@@ -578,7 +578,7 @@ foreach ($surveyRows as $s) {
                     });
                 }
 
-                // Initial render
+
                 const initial = data.slice(0, 20);
                 renderResults(initial);
                 if (latestId) renderDetailsById(latestId);
@@ -586,7 +586,7 @@ foreach ($surveyRows as $s) {
                 async function closeSurvey(id){
                     if (!confirm('Umfrage jetzt schließen? Danach kann niemand mehr abstimmen.')) return;
                     try {
-                        const res = await fetch('/db/admin/closeSurvey.php', {
+                        const res = await fetch(BASE + '/db/admin/closeSurvey.php', {
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
@@ -603,12 +603,12 @@ foreach ($surveyRows as $s) {
                             console.error('Close: Server error', { status: res.status, payload });
                             throw new Error(msg);
                         }
-                        // Update local cache and re-render
+
                         const idx = data.findIndex(x => x.id == id);
                         if (idx !== -1) {
                             data[idx].expires_at = payload.expires_at || new Date(Date.now()-60000).toISOString().slice(0,19).replace('T',' ');
                         }
-                        // Refresh list rendering and details
+
                         const q = (searchEl && searchEl.value || '').trim().toLowerCase();
                         const items = !q ? data.slice(0, 20) : data.filter(s =>
                             String(s.title || '').toLowerCase().includes(q) || String(s.creator || '').toLowerCase().includes(q)
@@ -623,7 +623,7 @@ foreach ($surveyRows as $s) {
                 async function resetSurvey(id){
                     if (!confirm('Alle Antworten dieser Umfrage löschen? Das kann nicht rückgängig gemacht werden.')) return;
                     try {
-                        const res = await fetch('/db/admin/resetSurveyData.php', {
+                        const res = await fetch(BASE + '/db/admin/resetSurveyData.php', {
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
@@ -640,12 +640,12 @@ foreach ($surveyRows as $s) {
                             console.error('Reset: Server error', { status: res.status, payload });
                             throw new Error(msg);
                         }
-                        // Update local cache: set response_count to 0
+
                         const idx = data.findIndex(x => x.id == id);
                         if (idx !== -1) {
                             data[idx].response_count = 0;
                         }
-                        // Rerender the list (preserve search) and details
+
                         const q = (searchEl && searchEl.value || '').trim().toLowerCase();
                         const items = !q ? data.slice(0, 20) : data.filter(s =>
                             String(s.title || '').toLowerCase().includes(q) || String(s.creator || '').toLowerCase().includes(q)
@@ -660,7 +660,7 @@ foreach ($surveyRows as $s) {
                 async function deleteSurvey(id){
                     if (!confirm('Diese Umfrage vollständig löschen? Alle Fragen und Antworten werden dauerhaft entfernt.')) return;
                     try {
-                        const res = await fetch('/db/admin/deleteSurvey.php', {
+                        const res = await fetch(BASE + '/db/admin/deleteSurvey.php', {
                             method: 'POST',
                             credentials: 'same-origin',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
@@ -677,16 +677,16 @@ foreach ($surveyRows as $s) {
                             console.error('Delete: Server error', { status: res.status, payload });
                             throw new Error(msg);
                         }
-                        // Remove from local data and refresh UI
+
                         const idx = data.findIndex(x => x.id == id);
                         if (idx !== -1) { data.splice(idx, 1); }
-                        // Re-render results based on current search
+
                         const q = (searchEl && searchEl.value || '').trim().toLowerCase();
                         const items = !q ? data.slice(0, 20) : data.filter(s =>
                             String(s.title || '').toLowerCase().includes(q) || String(s.creator || '').toLowerCase().includes(q)
                         ).slice(0, 50);
                         renderResults(items);
-                        // Clear details if the deleted survey was shown, or show next available
+
                         const next = data[0] ? data[0].id : null;
                         if (next) {
                             renderDetailsById(next);
@@ -699,7 +699,7 @@ foreach ($surveyRows as $s) {
                 }
 
                 async function loadDetails(id){
-                    const url = `/db/admin/surveyDetails.php?survey_id=${encodeURIComponent(id)}`;
+                    const url = `${BASE}/db/admin/surveyDetails.php?survey_id=${encodeURIComponent(id)}`;
                     try {
                         const res = await fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' }});
                         const text = await res.text();

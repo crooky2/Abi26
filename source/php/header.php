@@ -2,12 +2,12 @@
         <button class="menu-btn" id="menuBtn" aria-label="Menü öffnen" aria-controls="mobileDrawer" aria-expanded="false">
                 <span></span><span></span><span></span>
         </button>
-        <a class="header-logo" href="/">Abi26</a>
+        <a class="header-logo" href="<?= BASE_PATH ?>/">Abi26</a>
         <nav class="header-nav">
                 <?php if (!empty($_SESSION['loggedIn'])) { ?>
-                     <a href="/account">Account</a>
+                     <a href="<?= BASE_PATH ?>/account.php">Account</a>
                 <?php } else { ?>
-                     <a href="/account">Anmelden / Registrieren</a>
+                     <a href="<?= BASE_PATH ?>/account.php">Anmelden / Registrieren</a>
                 <?php } ?>
         
         </nav>
@@ -20,16 +20,19 @@
                 <button class="close-btn" id="closeDrawer" aria-label="Menü schließen">×</button>
         </div>
         <nav class="drawer-nav">
-                <a href="/">Home</a>
+                <a href="<?= BASE_PATH ?>/">Home</a>
                 <?php if (!empty($_SESSION['loggedIn'])) { ?>
-                     <a href="/account">Account</a>
+                     <a href="<?= BASE_PATH ?>/account.php">Account</a>
                 <?php } else { ?>
-                     <a href="/account">Anmelden / Registrieren</a>
+                     <a href="<?= BASE_PATH ?>/account.php">Anmelden / Registrieren</a>
                 <?php } ?>
         </nav>
 </aside>
 
 <script>
+(function(){
+    try { window.BASE_PATH = <?= json_encode(BASE_PATH) ?>; } catch (e) {}
+})();
 (function(){
     const btn = document.getElementById('menuBtn');
     const drawer = document.getElementById('mobileDrawer');

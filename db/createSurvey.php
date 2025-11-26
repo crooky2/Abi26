@@ -1,6 +1,7 @@
 <?php
 session_start();
-require_once 'db.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 	http_response_code(405);
@@ -10,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 if (empty($_SESSION['user_id'])) {
 	$_SESSION['flash_error'] = 'Zugriff verweigert. Bitte zuerst anmelden.';
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 }
 
@@ -20,12 +21,12 @@ try {
 	$user = $stmt->fetch(PDO::FETCH_ASSOC);
 	if (!$user || !$user['admin']) {
 		$_SESSION['flash_error'] = 'Zugriff verweigert. Nur für Admins.';
-		header('Location: /account.php');
+		header('Location: ' . base_url('account.php'));
 		exit;
 	}
 } catch (PDOException $e) {
 	$_SESSION['flash_error'] = 'Fehler bei der Berechtigungsprüfung: ' . htmlspecialchars($e->getMessage());
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 }
 
@@ -36,12 +37,12 @@ $questions = $_POST['questions'] ?? [];
 
 if ($title === '') {
 	$_SESSION['flash_error'] = 'Bitte Titel eingeben.';
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 }
 if (empty($questions)) {
 	$_SESSION['flash_error'] = 'Bitte mindestens eine Frage hinzufügen.';
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 }
 
@@ -74,11 +75,11 @@ try {
 	}
 
 	$_SESSION['flash_success'] = 'Umfrage erfolgreich erstellt!';
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 } catch (PDOException $e) {
 	$_SESSION['flash_error'] = 'Fehler beim Erstellen der Umfrage: ' . htmlspecialchars($e->getMessage());
-	header('Location: /account.php');
+	header('Location: ' . base_url('account.php'));
 	exit;
 }
 ?>
