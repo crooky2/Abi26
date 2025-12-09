@@ -454,6 +454,7 @@ foreach ($surveyRows as $s) {
 
         <script>
             (function() {
+                const BASE = window.BASE_PATH || '';
                 const data = Array.isArray(window.adminSurveyData) ? window.adminSurveyData : [];
                 const latestId = window.latestSurveyId || (data[0] ? data[0].id : null);
                 const listEl = document.getElementById('adminSurveyResults');
