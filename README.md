@@ -119,66 +119,7 @@ CREATE TABLE survey_answers (
 ### License
 Internal project for the Abi26 celebration. Choose and add a license if you plan to open-source or distribute.
 
----
 
-## Deutsch
 
-### Überblick
-- Tech-Stack: PHP 8+, MySQL (PDO), Vanilla JS, CSS
-- Umgebung: z. B. XAMPP auf Windows (htdocs), funktioniert aber auch auf anderen LAMP/WAMP/MAMP-Stacks
-- Hauptfunktionen:
-	- Login/Registrierung mit E-Mail + Passwort (Passwörter werden gehasht)
-	- Account-Seite mit Inline-Profilbearbeitung (E-Mail/Anzeigename), Speichern und Verwerfen
-	- Admin-Panel zum Erstellen von Umfragen mit verschiedenen Fragetypen
-	- Umfragenliste mit Suche und Masonry-Layout
-	- Voting mit Client- und Server-Validierung (alle Fragen müssen beantwortet werden)
-	- Einheitliche Erfolg-/Fehlerhinweise per Flash-Meldungen
-
-### Projektstruktur (Top-Level)
-- `index.php` – Startseite; zeigt Umfragen nach Login
-- `account.php` – Account-Seite; Profil oder Anmelden/Registrieren je nach Session
-- `db/` – PHP-Endpunkte (Login/Registrierung, Umfrage erstellen, Voting, etc.) und DB-Verbindung
-- `source/php/` – Templates (Header, Account, Admin, Umfragen)
-- `source/css/` – Stylesheets (global, Account, Index) gebündelt über `stylesheet.css`
-
-### Voraussetzungen
-- PHP 8+ (funktioniert auch mit 7.4+, empfohlen 8+)
-- MySQL 5.7+ (oder MariaDB)
-- Webserver (Apache über XAMPP ist okay)
-
-### Schnelleinrichtung (Windows + XAMPP)
-1. Projektordner nach `C:\xampp\htdocs` kopieren (z. B. `C:\xampp\htdocs\abi26`).
-2. Datenbank erstellen (z. B. `abi26testdb`).
-3. Zugangsdaten in `db/db.php` anpassen:
-	 - Host, DB-Name, Benutzername, Passwort
-4. Tabellen gemäß minimalem Schema (unten) anlegen.
-5. Apache und MySQL in XAMPP starten.
-6. `http://localhost/abi26/` im Browser öffnen.
-
-### Minimales Datenbankschema (MySQL)
-Siehe SQL-Block oben im englischen Teil; er entspricht der tatsächlichen Nutzung im Code. Typen/Constraints können bei Bedarf angepasst werden.
-
-### Nutzung
-1. Auf `/account.php` anmelden oder registrieren.
-2. Admin-Rechte vergeben, indem `admin = 1` in der Tabelle `accounts` für den gewünschten Benutzer gesetzt wird.
-3. Als Admin im Admin-Panel (auf der Account-Seite) Umfragen erstellen:
-	 - Fragetypen: Text, Einzelauswahl, Mehrfachauswahl, Zahl
-	 - Fragen verschieben, duplizieren, entfernen
-	 - Optionen für Auswahlfragen komfortabel im Options-Editor pflegen
-4. Auf der Startseite `/` nach Umfragen suchen und abstimmen.
-5. Alle Fragen müssen beantwortet werden; bei fehlenden Antworten erscheint ein deutlicher Hinweis.
-
-### Konfiguration
-- DB-Verbindung in `db/db.php`.
-- Sessions für Authentifizierung und Flash-Meldungen.
-- Icons: Google Material Icons werden u. a. für die Inline-Bearbeitung geladen.
-
-### Sicherheit (Kurzfassung)
-- Passwörter werden mit `password_hash` gehasht.
-- Es ist kein CSRF-Schutz eingebaut. Für produktive Nutzung bitte CSRF-Tokens ergänzen.
-- Client- und Server-Validierung existieren, dennoch sollten Eingaben weiter gehärtet werden, falls öffentlich zugänglich.
-
-### Lizenz
-Internes Projekt für die Abi26-Feier. Bitte eine Lizenz hinzufügen, wenn das Projekt veröffentlicht oder verteilt werden soll.
 
 test
