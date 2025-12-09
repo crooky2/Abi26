@@ -2,8 +2,6 @@
 
 This is a small PHP/MySQL website for voting and simple event management for our "Abi 26" celebration. It includes user accounts, an admin survey builder, and a voting UI with validation and clear feedback.
 
-Deutsch folgt weiter unten.
-
 ---
 
 ## English
